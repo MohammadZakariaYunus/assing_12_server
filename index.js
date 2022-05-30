@@ -36,6 +36,7 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db('atlas_machinery').collection('products');
+        const addCollection = client.db('atlas_machinery').collection('add');
         const bookingCollection = client.db('atlas_machinery').collection('bookings');
         const userCollection = client.db('atlas_machinery').collection('users');
 
@@ -53,6 +54,14 @@ async function run() {
             const products = await productsCollection.findOne(query);
             res.send(products);
         });
+        // Add
+
+        app.post('/products', async (req, res) => {
+            const add = req.body;
+            const result = await productsCollection.insertOne(add);
+            return res.send({ success: true, result });
+        })
+
 
         // My order
         app.get('/booking', async (req, res) => {
@@ -61,6 +70,10 @@ async function run() {
             const items = await bookingCollection.find(query).toArray();
             res.send(items);
         });
+
+
+
+
 
         // purchase
 
