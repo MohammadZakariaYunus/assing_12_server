@@ -39,6 +39,7 @@ async function run() {
         const addCollection = client.db('atlas_machinery').collection('add');
         const bookingCollection = client.db('atlas_machinery').collection('bookings');
         const userCollection = client.db('atlas_machinery').collection('users');
+        const paymentCollection = client.db('atlas_machinery').collection('payments');
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -71,9 +72,25 @@ async function run() {
             res.send(items);
         });
 
+        // Payment
+        app.get('/booking/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingCollection.findOne(query);
+            res.send(booking);
+        })
 
-
-
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
         // purchase
 
