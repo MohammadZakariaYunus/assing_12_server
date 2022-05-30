@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -36,9 +36,10 @@ async function run() {
     try {
         await client.connect();
         const productsCollection = client.db('atlas_machinery').collection('products');
-        const addCollection = client.db('atlas_machinery').collection('add');
+        const reviewCollection = client.db('atlas_machinery').collection('review');
         const bookingCollection = client.db('atlas_machinery').collection('bookings');
         const userCollection = client.db('atlas_machinery').collection('users');
+        const profileCollection = client.db('atlas_machinery').collection('profile');
         const paymentCollection = client.db('atlas_machinery').collection('payments');
 
         app.get('/products', async (req, res) => {
@@ -61,9 +62,41 @@ async function run() {
             const add = req.body;
             const result = await productsCollection.insertOne(add);
             return res.send({ success: true, result });
+        });
+
+        // Review
+
+        app.get('/review', async (req, res) => {
+            const query = {};
+            const result = await reviewCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.post('/review', async (req, res) => {
+            const add = req.body;
+            const result = await reviewCollection.insertOne(add);
+            return res.send({ success: true, result });
         })
 
+        // profile
+        app.get('/profile', async (req, res) => {
+            const query = {};
+            const result = await profileCollection.find(query).toArray();
+            res.send(result);
+        });
 
+        app.post('/profile', async (req, res) => {
+            const add = req.body;
+            const result = await profileCollection.insertOne(add);
+            return res.send({ success: true, result });
+        })
+        // booking
+
+        app.get('/booking', async (req, res) => {
+            const query = {};
+            const items = await bookingCollection.find(query).toArray();
+            res.send(items);
+        });
         // My order
         app.get('/booking', async (req, res) => {
             const email = req.query.email;
