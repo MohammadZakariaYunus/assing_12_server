@@ -75,6 +75,16 @@ async function run() {
             return res.send({ success: true, result });
         });
 
+        // Remove Product
+
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+
         // Review
 
         app.get('/review', async (req, res) => {
@@ -101,39 +111,15 @@ async function run() {
             const result = await profileCollection.insertOne(add);
             return res.send({ success: true, result });
         })
-        // booking
 
-        // app.get('/booking', async (req, res) => {
-        //     const query = {};
-        //     const items = await bookingCollection.find(query).toArray();
-        //     res.send(items);
+        // All Orders
 
-        // // Payment
+        app.get('/booking', async (req, res) => {
+            const query = {};
+            const result = await bookingCollection.find(query).toArray();
+            res.send(result);
+        });
 
-        // app.get('/bookings/:id', verifyJWT, async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { _id: ObjectId(id) };
-        //     const booking = await bookingCollection.findOne(query);
-        //     res.send(booking);
-        // })
-
-        // app.patch('/booking/:id', verifyJWT, async (req, res) => {
-        //     const id = req.params.id;
-        //     const payment = req.body;
-        //     const filter = { _id: ObjectId(id) };
-        //     const updatedDoc = {
-        //         $set: {
-        //             paid: true,
-        //             transactionId: payment.transactionId
-        //         }
-        //     }
-
-        //     const result = await paymentCollection.insertOne(payment);
-        //     const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
-        //     res.send(updatedBooking);
-        // })
-
-        // });
         // My order
         app.get('/booking', async (req, res) => {
             const email = req.query.email;
