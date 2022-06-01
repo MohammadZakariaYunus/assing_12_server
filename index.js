@@ -42,6 +42,18 @@ async function run() {
         const profileCollection = client.db('atlas_machinery').collection('profile');
         const paymentCollection = client.db('atlas_machinery').collection('payments');
 
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
+
+
         app.get('/products', async (req, res) => {
             const query = {};
             const cursor = productsCollection.find(query);
@@ -51,7 +63,6 @@ async function run() {
 
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: ObjectId(id) };
             const products = await productsCollection.findOne(query);
             res.send(products);
@@ -92,11 +103,37 @@ async function run() {
         })
         // booking
 
-        app.get('/booking', async (req, res) => {
-            const query = {};
-            const items = await bookingCollection.find(query).toArray();
-            res.send(items);
-        });
+        // app.get('/booking', async (req, res) => {
+        //     const query = {};
+        //     const items = await bookingCollection.find(query).toArray();
+        //     res.send(items);
+
+        // // Payment
+
+        // app.get('/bookings/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const booking = await bookingCollection.findOne(query);
+        //     res.send(booking);
+        // })
+
+        // app.patch('/booking/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id;
+        //     const payment = req.body;
+        //     const filter = { _id: ObjectId(id) };
+        //     const updatedDoc = {
+        //         $set: {
+        //             paid: true,
+        //             transactionId: payment.transactionId
+        //         }
+        //     }
+
+        //     const result = await paymentCollection.insertOne(payment);
+        //     const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+        //     res.send(updatedBooking);
+        // })
+
+        // });
         // My order
         app.get('/booking', async (req, res) => {
             const email = req.query.email;
@@ -105,13 +142,52 @@ async function run() {
             res.send(items);
         });
 
-        // Payment
+        app.get('/booking', async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const bookings = await bookingCollection.find(query).toArray();
+                return res.send(bookings);
+            }
+            else {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+        });
+
         app.get('/booking/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const booking = await bookingCollection.findOne(query);
+            console.log(booking)
             res.send(booking);
         })
+
+        // remove booking
+
+        app.delete('/booking/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await bookingCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+        app.patch('/booking/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
+        })
+
 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const service = req.body;
@@ -124,7 +200,6 @@ async function run() {
             });
             res.send({ clientSecret: paymentIntent.client_secret })
         });
-
         // purchase
 
         app.post('/booking', async (req, res) => {
@@ -146,21 +221,14 @@ async function run() {
             res.send({ admin: isAdmin })
         })
 
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const requester = req.decoded.email;
-            const requesterAccount = await userCollection.findOne({ email: requester });
-            if (requesterAccount.role === 'admin') {
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: 'admin' },
-                };
-                const result = await userCollection.updateOne(filter, updateDoc);
-                res.send(result);
-            }
-            else {
-                res.status(403).send({ message: 'forbidden' });
-            }
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
 
 
