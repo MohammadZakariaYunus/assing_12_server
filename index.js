@@ -195,10 +195,22 @@ async function run() {
         })
         // user
 
-        app.get('/user', async (req, res) => {
-            const users = await userCollection.find().toArray();
-            res.send(users);
+
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
         });
+
+        // delete user
+
+        app.delete('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await userCollection.deleteOne(filter);
+            res.send(result);
+        })
+
 
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -207,7 +219,7 @@ async function run() {
             res.send({ admin: isAdmin })
         })
 
-        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -216,7 +228,6 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
         })
-
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -231,9 +242,6 @@ async function run() {
             res.send({ result, token });
         }
         )
-
-
-
     }
 
     finally {
