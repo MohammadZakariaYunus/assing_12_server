@@ -4,5 +4,5 @@
 * react route
 * firebase authentication
 * mongo db
-* dashboard with nested route 
+* JWT Token And Verification
 * admin verification 
